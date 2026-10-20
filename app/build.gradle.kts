@@ -13,13 +13,29 @@ android {
         applicationId = "dev.qokhelper"
         minSdk = 30
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1"
+        // CI passes the run number and tag so each build installs over the previous one.
+        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+        versionName = System.getenv("VERSION_NAME") ?: "0.1"
+    }
+
+    // Release signing comes from the environment (GitHub Actions secrets in CI). Without it the
+    // release APK is built unsigned.
+    val keystorePath = System.getenv("SIGNING_KEYSTORE_PATH")
+    signingConfigs {
+        if (keystorePath != null) {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("SIGNING_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("SIGNING_KEY_ALIAS")
+                keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (keystorePath != null) signingConfig = signingConfigs.getByName("release")
         }
     }
 
