@@ -41,4 +41,6 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.11.0")
 
     testImplementation("junit:junit:4.13.2")
+    // Android's org.json is a stub in local unit tests; use the real implementation there.
+    testImplementation("org.json:json:20250517")
 }

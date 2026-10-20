@@ -3,8 +3,8 @@ package dev.qokhelper
 import com.anthropic.client.AnthropicClient
 import com.anthropic.client.okhttp.AnthropicOkHttpClient
 import com.anthropic.core.JsonValue
-import com.anthropic.errors.AnthropicServiceException
 import com.anthropic.errors.AnthropicIoException
+import com.anthropic.errors.AnthropicServiceException
 import com.anthropic.models.messages.Base64ImageSource
 import com.anthropic.models.messages.ContentBlockParam
 import com.anthropic.models.messages.ImageBlockParam
@@ -14,22 +14,25 @@ import com.anthropic.models.messages.StopReason
 import com.anthropic.models.messages.TextBlockParam
 import java.time.Duration
 
-/** Sends a screenshot to Claude and returns the answer it picks. Blocking; call off the main thread. */
-class AnswerEngine(apiKey: String, private val model: String) {
+/** Asks Claude through the official Anthropic SDK. A blank [baseUrl] means the official API. */
+class ClaudeAnswerer(apiKey: String, private val model: String, baseUrl: String) : Answerer {
+
+    private val customBaseUrl = baseUrl.isNotBlank()
 
     private val client: AnthropicClient = AnthropicOkHttpClient.builder()
         .apiKey(apiKey)
+        .apply { if (customBaseUrl) baseUrl(baseUrl.trim().trimEnd('/')) }
         .timeout(Duration.ofSeconds(30))
         .maxRetries(1)
         .build()
 
-    fun answer(jpegBase64: String): Answer {
+    override fun answer(jpegBase64: String): Answer {
         val params = MessageCreateParams.builder()
             .model(model)
             .maxTokens(4000L)
             // The game's question timer is short; low effort keeps the reply to a few seconds.
             .outputConfig(OutputConfig.builder().effort(OutputConfig.Effort.LOW).build())
-            .system(SYSTEM_PROMPT)
+            .system(Prompt.SYSTEM)
             .addUserMessageOfBlockParams(
                 listOf(
                     ContentBlockParam.ofImage(
@@ -42,11 +45,12 @@ class AnswerEngine(apiKey: String, private val model: String) {
                             )
                             .build()
                     ),
-                    ContentBlockParam.ofText(TextBlockParam.builder().text("Answer the question.").build()),
+                    ContentBlockParam.ofText(TextBlockParam.builder().text(Prompt.USER).build()),
                 )
             )
             .apply {
-                if (model in FALLBACK_MODELS) {
+                // Proxies may not pass beta fields through, so only ask for fallbacks on the official API.
+                if (model in FALLBACK_MODELS && !customBaseUrl) {
                     // If a safety classifier refuses, let the API retry on another model instead of failing.
                     putAdditionalHeader("anthropic-beta", "server-side-fallback-2026-07-01")
                     putAdditionalBodyProperty("fallbacks", JsonValue.from("default"))
@@ -69,22 +73,7 @@ class AnswerEngine(apiKey: String, private val model: String) {
     }
 
     companion object {
-        val MODELS = listOf("claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5")
+        val SUGGESTED_MODELS = listOf("claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5")
         private val FALLBACK_MODELS = setOf("claude-opus-5-5", "claude-sonnet-5-5")
-
-        private val SYSTEM_PROMPT = """
-            You are looking at a phone screenshot of Quiz of Kings (کوییز آف کینگز), a Persian trivia game.
-            The screen shows one multiple-choice question and four answer buttons. Work out the correct answer.
-
-            Reply with exactly one line and nothing else:
-            <position>|<answer text>|<confidence>
-
-            - position: 1-4, the correct button's position counting from the top. If the buttons are in a
-              2x2 grid, count the top row first, right to left.
-            - answer text: the correct button's text, copied exactly as shown.
-            - confidence: 0-100, how sure you are.
-
-            If no question is visible on screen, reply NONE.
-        """.trimIndent()
     }
 }

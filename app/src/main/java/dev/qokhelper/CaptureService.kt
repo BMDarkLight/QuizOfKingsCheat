@@ -31,7 +31,7 @@ class CaptureService : Service() {
     private var projection: MediaProjection? = null
     private var grabber: ScreenGrabber? = null
     private var overlay: OverlayController? = null
-    private var engine: AnswerEngine? = null
+    private var engine: Answerer? = null
     private var inFlight: Job? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -57,7 +57,7 @@ class CaptureService : Service() {
         }
 
         val prefs = Prefs(this)
-        engine = AnswerEngine(prefs.apiKey, prefs.model)
+        engine = prefs.provider.let { it.create(prefs.settings(it)) }
 
         val mp = getSystemService(MediaProjectionManager::class.java).getMediaProjection(resultCode, data)
         if (mp == null) {

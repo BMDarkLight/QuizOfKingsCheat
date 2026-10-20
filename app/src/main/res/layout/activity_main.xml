@@ -12,13 +12,36 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Anthropic API key" />
+            android:text="Provider" />
+
+        <RadioGroup
+            android:id="@+id/provider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <RadioButton
+                android:id="@+id/providerClaude"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Claude (Anthropic)" />
+
+            <RadioButton
+                android:id="@+id/providerOpenAi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="OpenAI-compatible" />
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="API key" />
 
         <EditText
             android:id="@+id/apiKey"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="sk-ant-..."
             android:inputType="textPassword"
             android:importantForAutofill="no" />
 
@@ -28,10 +51,26 @@
             android:layout_marginTop="16dp"
             android:text="Model" />
 
-        <Spinner
+        <AutoCompleteTextView
             android:id="@+id/model"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:completionThreshold="0"
+            android:inputType="text"
+            android:importantForAutofill="no" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Base URL (optional)" />
+
+        <EditText
+            android:id="@+id/baseUrl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textUri"
+            android:importantForAutofill="no" />
 
         <TextView
             android:id="@+id/status"
