@@ -38,6 +38,45 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 Building needs JDK 17+ and the Android SDK (platform 36). Set `sdk.dir` in `local.properties` or `ANDROID_HOME`.
 
+Or download a signed APK built by CI (see below).
+
+## CI and signed releases
+
+`.github/workflows/build.yml` runs on every push to `main`, on pull requests, and on `v*` tags. It runs the unit tests, builds a release APK, verifies its signature, and uploads it as a workflow artifact named `qok-helper-<version>`. Pushing a tag such as `v1.0.0` also publishes a GitHub release with the APK attached:
+
+```bash
+git tag v1.0.0 && git push origin v1.0.0
+```
+
+### Signing secrets
+
+Add these under **Settings → Secrets and variables → Actions → New repository secret**:
+
+| Secret | Value |
+|---|---|
+| `KEYSTORE_BASE64` | Your keystore file, base64-encoded |
+| `KEYSTORE_PASSWORD` | The keystore's password |
+| `KEY_ALIAS` | The key's alias inside the keystore |
+| `KEY_PASSWORD` | The key's password (the same as `KEYSTORE_PASSWORD` for a PKCS12 keystore made as below) |
+
+To create a keystore, run this once and keep the file and passwords safe. Android only installs an update over an existing install if it's signed with the same key:
+
+```bash
+keytool -genkeypair -v -keystore release.jks -storetype PKCS12 -alias qokhelper -keyalg RSA -keysize 4096 -validity 10000
+```
+
+It asks for a password and some name fields. The name fields can be anything. Then copy the base64 version for `KEYSTORE_BASE64`:
+
+```bash
+base64 -i release.jks | pbcopy
+```
+
+(On Linux, use `base64 -w0 release.jks`.) Don't commit `release.jks`.
+
+Without the secrets, branch builds still run but produce an unsigned APK with a warning, and tag builds fail rather than publish an unsigned release. CI sets the version code to the run number, so each CI build installs over the previous one.
+
+To sign a local release build, set the same values as environment variables. `SIGNING_KEYSTORE_PATH` is the path to the `.jks` file, and the others are `SIGNING_KEYSTORE_PASSWORD`, `SIGNING_KEY_ALIAS`, and `SIGNING_KEY_PASSWORD`. Then run `./gradlew assembleRelease`.
+
 ## Use
 
 1. Open **QoK Helper**, pick a provider, and fill in your API key (plus model and base URL if needed; see below).
