@@ -57,7 +57,7 @@ class CaptureService : Service() {
         }
 
         val prefs = Prefs(this)
-        engine = prefs.provider.let { it.create(prefs.settings(it)) }
+        engine = prefs.provider.let { it.create(prefs.settings(it), prefs.webSearch) }
 
         val mp = getSystemService(MediaProjectionManager::class.java).getMediaProjection(resultCode, data)
         if (mp == null) {

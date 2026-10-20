@@ -9,9 +9,9 @@ enum class Provider(val label: String, val defaultModel: String, val defaultBase
     CLAUDE("Claude (Anthropic)", "claude-opus-5-5", "https://api.anthropic.com"),
     OPENAI("OpenAI-compatible", "gpt-4o", "https://api.openai.com/v1");
 
-    fun create(settings: ProviderSettings): Answerer = when (this) {
-        CLAUDE -> ClaudeAnswerer(settings.apiKey, settings.model, settings.baseUrl)
-        OPENAI -> OpenAiAnswerer(settings.apiKey, settings.model, settings.baseUrl)
+    fun create(settings: ProviderSettings, webSearch: Boolean): Answerer = when (this) {
+        CLAUDE -> ClaudeAnswerer(settings.apiKey, settings.model, settings.baseUrl, webSearch)
+        OPENAI -> OpenAiAnswerer(settings.apiKey, settings.model, settings.baseUrl, webSearch)
     }
 }
 
@@ -20,11 +20,11 @@ data class ProviderSettings(val apiKey: String, val model: String, val baseUrl: 
 object Prompt {
     const val USER = "Answer the question."
 
-    val SYSTEM = """
+    private val BASE = """
         You are looking at a phone screenshot of Quiz of Kings (کوییز آف کینگز), a Persian trivia game.
         The screen shows one multiple-choice question and four answer buttons. Work out the correct answer.
 
-        Reply with exactly one line and nothing else:
+        End your reply with exactly one line in this form:
         <position>|<answer text>|<confidence>
 
         - position: 1-4, the correct button's position counting from the top. If the buttons are in a
@@ -34,4 +34,14 @@ object Prompt {
 
         If no question is visible on screen, reply NONE.
     """.trimIndent()
+
+    private val SEARCH = """
+
+        You can search the web. The game's timer is short, so answer from what you know when you are
+        confident, and only search when you are not, or when the question is about recent events,
+        exact numbers, or dates. Use one search, two at most. Search in Persian or English, whichever
+        is more likely to find the answer.
+    """.trimIndent()
+
+    fun system(webSearch: Boolean) = if (webSearch) BASE + "\n" + SEARCH else BASE
 }

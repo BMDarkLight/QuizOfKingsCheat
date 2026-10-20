@@ -10,6 +10,10 @@ class Prefs(context: Context) {
         get() = runCatching { Provider.valueOf(sp.getString("provider", null)!!) }.getOrDefault(Provider.CLAUDE)
         set(v) = sp.edit().putString("provider", v.name).apply()
 
+    var webSearch: Boolean
+        get() = sp.getBoolean("web_search", true)
+        set(v) = sp.edit().putBoolean("web_search", v).apply()
+
     fun settings(p: Provider) = ProviderSettings(
         apiKey = sp.getString("${p.name}.api_key", "").orEmpty(),
         model = sp.getString("${p.name}.model", null)?.takeIf { it.isNotBlank() } ?: p.defaultModel,

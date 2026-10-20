@@ -11,6 +11,7 @@ import android.provider.Settings
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.RadioGroup
 import android.widget.TextView
@@ -59,6 +60,11 @@ class MainActivity : ComponentActivity() {
                 prefs.provider = provider
                 loadFields()
             }
+        }
+
+        findViewById<CheckBox>(R.id.webSearch).apply {
+            isChecked = prefs.webSearch
+            setOnCheckedChangeListener { _, checked -> prefs.webSearch = checked }
         }
 
         findViewById<Button>(R.id.overlayPermission).setOnClickListener {

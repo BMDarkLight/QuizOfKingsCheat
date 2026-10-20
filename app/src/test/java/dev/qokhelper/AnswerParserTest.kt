@@ -22,6 +22,14 @@ class AnswerParserTest {
     }
 
     @Test
+    fun takesTheLastAnswerLine() {
+        assertEquals(
+            Answer.Found(position = 1, text = "Canberra", confidence = 95),
+            AnswerParser.parse("My first guess: 3|Sydney|40\nThe search says otherwise.\n1|Canberra|95"),
+        )
+    }
+
+    @Test
     fun acceptsPersianDigits() {
         assertEquals(
             Answer.Found(position = 4, text = "۱۳۵۷", confidence = 60),

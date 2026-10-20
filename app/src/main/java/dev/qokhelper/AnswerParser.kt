@@ -12,10 +12,11 @@ object AnswerParser {
     private val LINE = Regex("""^\s*([1-4])\s*\|\s*([^|]+?)\s*(?:\|\s*(\d{1,3})\s*%?)?\s*$""")
 
     fun parse(reply: String): Answer {
-        val text = normalizeDigits(reply).trim()
-        if (text.equals("NONE", ignoreCase = true)) return Answer.NoQuestion
-        for (line in text.lines()) {
-            val m = LINE.find(line) ?: continue
+        val text = reply.trim()
+        if (text.lines().lastOrNull()?.trim().equals("NONE", ignoreCase = true)) return Answer.NoQuestion
+        // The answer line comes last; anything before it is the model thinking out loud.
+        for (line in text.lines().asReversed()) {
+            val m = LINE.find(normalizeDigits(line)) ?: continue
             return Answer.Found(
                 position = m.groupValues[1].toInt(),
                 text = m.groupValues[2],
@@ -26,12 +27,12 @@ object AnswerParser {
     }
 
     /**
-     * Persian and Arabic-Indic digits -> ASCII in the position and confidence fields only;
+     * Persian and Arabic-Indic digits -> ASCII in one line's position and confidence fields only;
      * the answer text may legitimately contain Persian digits (e.g. a year).
      */
-    private fun normalizeDigits(s: String): String {
-        val parts = s.split('|')
-        if (parts.size < 2) return s
+    private fun normalizeDigits(line: String): String {
+        val parts = line.split('|')
+        if (parts.size < 2) return line
         val out = parts.toMutableList()
         out[0] = toAscii(out[0])
         if (out.size >= 3) out[out.lastIndex] = toAscii(out.last())

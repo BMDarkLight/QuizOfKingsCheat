@@ -72,6 +72,13 @@
             android:inputType="textUri"
             android:importantForAutofill="no" />
 
+        <CheckBox
+            android:id="@+id/webSearch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Let the model search the web (slower, better on hard or recent questions)" />
+
         <TextView
             android:id="@+id/status"
             android:layout_width="match_parent"
