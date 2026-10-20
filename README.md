@@ -81,17 +81,29 @@ Calls `POST {base URL}/chat/completions` and sends the screenshot as an `image_u
 
 The API key is sent as `Authorization: Bearer <key>`. You can leave it blank for keyless local servers, as long as a base URL is set. Plain `http://` URLs are allowed, so LAN servers work.
 
+## Web search
+
+Turn on **Let the model search the web** in settings (it's on by default) and the model can look things up before it answers. It's told to answer from memory when it's confident and to search only when it isn't, or when the question is about recent events, exact numbers, or dates. It can make two searches per question at most. Expect a search to add a few seconds.
+
+| Provider | How it searches |
+|---|---|
+| Claude | Anthropic's server-side web search tool. Search runs on Anthropic's side, with no extra setup. API web searches are billed per search on top of tokens. |
+| OpenAI-compatible | A `web_search` function tool. When the model calls it, the app searches [DuckDuckGo](https://html.duckduckgo.com/html/) from the phone, falls back to Wikipedia (Persian or English, matching the query) if that comes back empty, and returns the top results to the model. No extra key needed, but the model must support tool calling. |
+
+DuckDuckGo's HTML page isn't an official API, so it could change or block requests. If that happens, the Wikipedia fallback still works.
+
 ## How it works
 
 | File | Role |
 |---|---|
-| `MainActivity.kt` | Settings screen: provider, API key, model, base URL, permissions, start/stop |
+| `MainActivity.kt` | Settings screen: provider, API key, model, base URL, web search, permissions, start/stop |
 | `CaptureService.kt` | Foreground service that owns the screen capture and the overlay |
 | `ScreenGrabber.kt` | Mirrors the screen into an `ImageReader` and keeps the newest frame, so a capture is instant |
 | `OverlayController.kt` | The draggable **?** button and the answer card |
 | `Answerer.kt` | The provider interface, provider list, and the shared prompt |
-| `ClaudeAnswerer.kt` | Sends a downscaled JPEG to the Claude API through the `anthropic-java` SDK |
-| `OpenAiAnswerer.kt` | Sends it to any OpenAI-compatible Chat Completions endpoint |
+| `ClaudeAnswerer.kt` | Sends a downscaled JPEG to the Claude API through the `anthropic-java` SDK, with optional server-side web search |
+| `OpenAiAnswerer.kt` | Sends it to any OpenAI-compatible Chat Completions endpoint and runs the `web_search` tool loop |
+| `WebSearch.kt` | Keyless search on the phone (DuckDuckGo, then Wikipedia) for the OpenAI-compatible tool |
 | `AnswerParser.kt` | Parses the model's `position\|answer\|confidence` reply |
 
 Run the unit tests with `./gradlew testDebugUnitTest`.
